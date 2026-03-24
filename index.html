@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PolyMind</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#00000a;
+  --surf:rgba(5,8,22,0.94);
+  --surf2:rgba(8,12,32,0.88);
+  --b1:rgba(80,140,255,0.1);
+  --b2:rgba(80,140,255,0.22);
+  --ac:#00d4ff;
+  --ac2:#7b2fff;
+  --ac3:#ff6b35;
+  --tx:#dde8ff;
+  --mu:#3a4a70;
+  --mu2:#5a6a90;
+  --ok:#00ffaa;
+  --warn:#ffaa00;
+  --err:#ff3d5a;
+  --orb:'Orbitron',monospace;
+  --mono:'Share Tech Mono',monospace;
+  --body:'Rajdhani',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--tx);font-family:var(--body);min-height:100vh;overflow-x:hidden}
+canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+.nb{position:fixed;border-radius:50%;pointer-events:none;z-index:0}
+.nb1{width:800px;height:800px;top:-300px;left:-200px;background:radial-gradient(circle,rgba(123,47,255,0.06) 0%,transparent 60%);animation:nb 20s ease-in-out infinite alternate}
+.nb2{width:600px;height:600px;bottom:-150px;right:-150px;background:radial-gradient(circle,rgba(0,210,255,0.05) 0%,transparent 60%);animation:nb 25s ease-in-out infinite alternate-reverse}
+.nb3{width:350px;height:350px;top:35%;left:55%;background:radial-gradient(circle,rgba(255,107,53,0.04) 0%,transparent 60%);animation:nb 30s ease-in-out infinite alternate}
+@keyframes nb{from{transform:translate(0,0)}to{transform:translate(35px,25px)}}
+
+.wrap{max-width:780px;margin:0 auto;padding:2rem 1.25rem 6rem;position:relative;z-index:1}
+
+/* HEADER */
+header{text-align:center;padding:3rem 0 2rem;margin-bottom:2rem}
+.logo-ring{width:52px;height:52px;margin:0 auto 1rem;position:relative}
+.logo-ring svg{width:100%;height:100%}
+.ring-outer{animation:spin 14s linear infinite;transform-origin:center}
+.ring-inner{animation:spin 8s linear infinite reverse;transform-origin:center}
+@keyframes spin{to{transform:rotate(360deg)}}
+.logo-txt{font-family:var(--orb);font-size:2.6rem;font-weight:900;letter-spacing:0.05em;color:#fff;text-shadow:0 0 40px rgba(0,212,255,0.45)}
+.logo-txt b{color:var(--ac)}
+.logo-sub{font-family:var(--mono);font-size:0.68rem;color:var(--mu2);letter-spacing:0.2em;text-transform:uppercase;margin-top:0.4rem}
+
+.hr{height:1px;background:linear-gradient(90deg,transparent,rgba(0,212,255,0.25),rgba(123,47,255,0.25),transparent);margin:1.5rem 0}
+
+/* API KEY CARD */
+.apikey-card{background:var(--surf);border:1px solid var(--b2);border-radius:16px;padding:1.5rem;margin-bottom:1rem;backdrop-filter:blur(16px);position:relative;overflow:hidden;transition:all 0.3s}
+.apikey-card::before{content:'';position:absolute;top:0;left:15%;right:15%;height:1px;background:linear-gradient(90deg,transparent,rgba(123,47,255,0.6),transparent)}
+.apikey-card.locked{border-color:rgba(123,47,255,0.35)}
+.apikey-card.unlocked{border-color:rgba(0,255,170,0.25)}
+.key-row{display:flex;gap:0.6rem;align-items:center;margin-bottom:0.5rem}
+.key-input{flex:1;background:rgba(0,4,18,0.8);border:1px solid var(--b1);border-radius:9px;color:var(--tx);font-family:var(--mono);font-size:0.8rem;padding:0.7rem 1rem;outline:none;transition:border-color 0.2s,box-shadow 0.2s;letter-spacing:0.04em}
+.key-input:focus{border-color:rgba(123,47,255,0.5);box-shadow:0 0 0 3px rgba(123,47,255,0.06)}
+.key-input::placeholder{color:var(--mu)}
+.key-input.ok{border-color:rgba(0,255,170,0.35)}
+.btn-key{flex-shrink:0;padding:0.7rem 1rem;background:rgba(123,47,255,0.15);border:1px solid rgba(123,47,255,0.35);border-radius:9px;color:#fff;font-family:var(--mono);font-size:0.72rem;cursor:pointer;transition:all 0.2s;white-space:nowrap;letter-spacing:0.05em}
+.btn-key:hover{background:rgba(123,47,255,0.25);border-color:rgba(123,47,255,0.6)}
+.btn-key.saved{background:rgba(0,255,170,0.08);border-color:rgba(0,255,170,0.3);color:var(--ok)}
+.key-status{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:0.65rem}
+.key-status-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.key-status.none .key-status-dot{background:var(--mu);box-shadow:none}
+.key-status.set .key-status-dot{background:var(--ok);box-shadow:0 0 7px var(--ok);animation:pulse 2s infinite}
+.key-status.none span{color:var(--mu)}
+.key-status.set span{color:var(--ok)}
+.key-hint{margin-top:0.6rem;font-family:var(--mono);font-size:0.62rem;color:var(--mu);line-height:1.6}
+.key-hint a{color:var(--ac2);text-decoration:none}
+.key-hint a:hover{text-decoration:underline}
+
+/* INPUT CARD */
+.card{background:var(--surf);border:1px solid var(--b2);border-radius:16px;padding:1.5rem;margin-bottom:1rem;backdrop-filter:blur(16px);position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:15%;right:15%;height:1px;background:linear-gradient(90deg,transparent,rgba(0,212,255,0.5),transparent)}
+
+.clabel{font-family:var(--mono);font-size:0.62rem;color:var(--ac);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:0.65rem;display:flex;align-items:center;gap:7px}
+.clabel::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--ac);box-shadow:0 0 8px var(--ac);flex-shrink:0}
+
+/* URL INPUT */
+.url-wrap{position:relative;display:flex;align-items:center;gap:0;margin-bottom:1rem}
+.url-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--mu2);pointer-events:none;font-family:var(--mono)}
+.url-input{width:100%;background:rgba(0,4,18,0.8);border:1px solid var(--b1);border-radius:10px;color:var(--tx);font-family:var(--mono);font-size:0.82rem;padding:0.85rem 1rem 0.85rem 2.6rem;outline:none;transition:border-color 0.2s,box-shadow 0.2s;letter-spacing:0.02em}
+.url-input:focus{border-color:rgba(0,212,255,0.45);box-shadow:0 0 0 3px rgba(0,212,255,0.06)}
+.url-input::placeholder{color:var(--mu)}
+.url-input.valid{border-color:rgba(0,255,170,0.35)}
+.url-input.invalid{border-color:rgba(255,61,90,0.4)}
+
+/* PREVIEW CHIP */
+.preview{display:none;align-items:center;gap:10px;padding:0.6rem 0.85rem;background:rgba(0,255,170,0.04);border:1px solid rgba(0,255,170,0.15);border-radius:8px;margin-bottom:1rem;animation:fadeIn 0.3s ease}
+.preview.show{display:flex}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.preview-dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok);flex-shrink:0;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.preview-slug{font-family:var(--mono);font-size:0.75rem;color:var(--ok);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.preview-badge{font-family:var(--mono);font-size:0.6rem;color:rgba(0,255,170,0.6);background:rgba(0,255,170,0.08);border:1px solid rgba(0,255,170,0.15);border-radius:4px;padding:2px 7px}
+
+/* STAKE ROW */
+.stake-row{display:flex;align-items:center;gap:0.75rem;margin-bottom:0}
+.stake-label{font-family:var(--mono);font-size:0.65rem;color:var(--mu2);letter-spacing:0.1em;text-transform:uppercase;white-space:nowrap}
+.stake-input{width:130px;background:rgba(0,4,18,0.8);border:1px solid var(--b1);border-radius:8px;color:var(--tx);font-family:var(--mono);font-size:0.85rem;padding:0.5rem 0.75rem;outline:none;transition:border-color 0.2s}
+.stake-input:focus{border-color:rgba(0,212,255,0.4)}
+.stake-input::placeholder{color:var(--mu)}
+.stake-hint{font-family:var(--mono);font-size:0.65rem;color:var(--mu);flex:1}
+
+/* BTN */
+.btn-go{width:100%;margin-top:1.1rem;padding:0.85rem;background:linear-gradient(135deg,rgba(0,212,255,0.12),rgba(123,47,255,0.14));border:1px solid rgba(0,212,255,0.35);border-radius:11px;color:#fff;font-family:var(--orb);font-size:0.82rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;transition:all 0.25s;position:relative;overflow:hidden}
+.btn-go::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,212,255,0.08),rgba(123,47,255,0.1));opacity:0;transition:opacity 0.2s}
+.btn-go:hover::after{opacity:1}
+.btn-go:hover{border-color:rgba(0,212,255,0.6);box-shadow:0 0 24px rgba(0,212,255,0.12),0 0 50px rgba(123,47,255,0.08);transform:translateY(-1px)}
+.btn-go:active{transform:translateY(0)}
+.btn-go:disabled{opacity:0.3;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-go:disabled::after{display:none}
+
+/* LOADING */
+.loader{display:none;gap:12px;align-items:flex-start;padding:1rem 1.2rem;background:var(--surf);border:1px solid var(--b1);border-radius:12px;margin-bottom:1rem;backdrop-filter:blur(8px)}
+.loader.on{display:flex}
+.spin-ring{width:22px;height:22px;border-radius:50%;border:2px solid transparent;border-top-color:var(--ac);border-right-color:rgba(0,212,255,0.25);animation:spin 0.85s linear infinite;flex-shrink:0;box-shadow:0 0 12px rgba(0,212,255,0.25);margin-top:2px}
+.steps{flex:1;display:flex;flex-direction:column;gap:3px}
+.step{font-family:var(--mono);font-size:0.72rem;color:var(--mu);transition:color 0.3s,opacity 0.3s;opacity:0.5}
+.step.cur{color:var(--ac);opacity:1}
+.step.done{color:var(--ok);opacity:0.7}
+.step.done::before{content:'✓ '}
+
+/* ERROR */
+.err{display:none;padding:0.8rem 1rem;background:rgba(255,61,90,0.06);border:1px solid rgba(255,61,90,0.22);border-radius:9px;font-family:var(--mono);font-size:0.72rem;color:var(--err);margin-bottom:1rem;line-height:1.6}
+.err.on{display:block}
+
+/* MARKET INFO BANNER */
+.mkt-banner{display:none;background:var(--surf);border:1px solid var(--b2);border-radius:14px;padding:1.2rem 1.4rem;margin-bottom:1rem;backdrop-filter:blur(12px);animation:floatUp 0.4s ease}
+.mkt-banner.on{display:block}
+.mkt-title{font-family:var(--body);font-size:1.05rem;font-weight:600;color:#fff;line-height:1.4;margin-bottom:0.5rem}
+.mkt-meta{display:flex;flex-wrap:wrap;gap:0.5rem}
+.mkt-tag{font-family:var(--mono);font-size:0.62rem;color:var(--mu2);background:rgba(80,140,255,0.07);border:1px solid var(--b1);border-radius:5px;padding:3px 9px}
+.mkt-tag b{color:var(--ac)}
+
+/* RESULTS */
+.results{display:none;animation:floatUp 0.45s cubic-bezier(0.16,1,0.3,1)}
+.results.on{display:block}
+@keyframes floatUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+/* METRICS */
+.m-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0.7rem;margin-bottom:1rem}
+.m-box{background:var(--surf);border:1px solid var(--b1);border-radius:12px;padding:0.95rem 0.6rem;text-align:center;backdrop-filter:blur(8px);position:relative;overflow:hidden;transition:border-color 0.2s}
+.m-box:hover{border-color:var(--b2)}
+.m-box::after{content:'';position:absolute;bottom:0;left:20%;right:20%;height:2px;border-radius:1px}
+.m-ai::after{background:var(--ac)}
+.m-mkt::after{background:var(--ac2)}
+.m-edge.pos::after{background:var(--ok)}
+.m-edge.neg::after{background:var(--err)}
+.m-edge.neu::after{background:var(--warn)}
+.m-conf::after{background:rgba(255,170,0,0.5)}
+.mlabel{font-family:var(--mono);font-size:0.58rem;color:var(--mu2);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.45rem}
+.mval{font-family:var(--orb);font-size:1.6rem;font-weight:700;line-height:1}
+.msub{font-family:var(--mono);font-size:0.58rem;color:var(--mu);margin-top:0.25rem}
+.v-ai{color:var(--ac);text-shadow:0 0 12px rgba(0,212,255,0.35)}
+.v-mkt{color:var(--ac2);text-shadow:0 0 12px rgba(123,47,255,0.35)}
+.v-pos{color:var(--ok);text-shadow:0 0 12px rgba(0,255,170,0.35)}
+.v-neg{color:var(--err);text-shadow:0 0 12px rgba(255,61,90,0.35)}
+.v-neu{color:var(--warn);text-shadow:0 0 12px rgba(255,170,0,0.35)}
+.v-wh{color:#fff}
+
+/* VERDICT */
+.verdict{display:flex;align-items:center;gap:0.9rem;padding:1rem 1.3rem;border-radius:12px;margin-bottom:1rem;border:1px solid transparent;backdrop-filter:blur(8px)}
+.verdict.buy{background:rgba(0,255,170,0.03);border-color:rgba(0,255,170,0.18)}
+.verdict.avoid{background:rgba(255,61,90,0.03);border-color:rgba(255,61,90,0.18)}
+.verdict.neutral{background:rgba(255,170,0,0.03);border-color:rgba(255,170,0,0.18)}
+.vchip{font-family:var(--orb);font-size:0.68rem;font-weight:700;letter-spacing:0.1em;padding:0.38rem 0.9rem;border-radius:6px;white-space:nowrap;text-transform:uppercase}
+.buy .vchip{background:rgba(0,255,170,0.1);color:var(--ok);border:1px solid rgba(0,255,170,0.28)}
+.avoid .vchip{background:rgba(255,61,90,0.1);color:var(--err);border:1px solid rgba(255,61,90,0.28)}
+.neutral .vchip{background:rgba(255,170,0,0.1);color:var(--warn);border:1px solid rgba(255,170,0,0.28)}
+.vtxt{font-size:0.92rem;color:var(--tx);line-height:1.5}
+
+/* CONTRACT INTEL */
+.intel{background:var(--surf);border:1px solid var(--b1);border-radius:14px;padding:1.2rem;margin-bottom:1rem;backdrop-filter:blur(8px)}
+.intel-hdr{font-family:var(--mono);font-size:0.62rem;color:var(--ac3);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:0.9rem;display:flex;align-items:center;gap:8px}
+.intel-hdr::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--ac3);box-shadow:0 0 7px var(--ac3)}
+.intel-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.65rem}
+.intel-item{background:rgba(255,107,53,0.04);border:1px solid rgba(255,107,53,0.1);border-radius:8px;padding:0.7rem}
+.ilabel{font-family:var(--mono);font-size:0.58rem;color:rgba(255,107,53,0.55);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.25rem}
+.ival{font-family:var(--orb);font-size:0.88rem;color:var(--tx)}
+
+/* ANALYSIS */
+.analysis{background:var(--surf);border:1px solid var(--b1);border-radius:14px;overflow:hidden;margin-bottom:1rem;backdrop-filter:blur(8px)}
+.a-hdr{padding:0.8rem 1.2rem;border-bottom:1px solid var(--b1);font-family:var(--mono);font-size:0.62rem;color:var(--ac);letter-spacing:0.14em;text-transform:uppercase}
+.a-body{padding:1.2rem}
+.a-txt{font-size:0.9rem;line-height:1.78;color:#aabbd8;margin-bottom:1.1rem}
+.f-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.9rem}
+.fc h4{font-family:var(--mono);font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:0.5rem;display:flex;align-items:center;gap:5px}
+.fc.yes h4{color:var(--ok)}
+.fc.yes h4::before{content:'▲';font-size:0.5rem}
+.fc.no h4{color:var(--err)}
+.fc.no h4::before{content:'▼';font-size:0.5rem}
+.fi{font-family:var(--mono);font-size:0.72rem;color:#7080a0;padding:0.4rem 0.7rem;border-radius:5px;margin-bottom:0.3rem;border-left:2px solid transparent;line-height:1.45}
+.fc.yes .fi{background:rgba(0,255,170,0.03);border-left-color:rgba(0,255,170,0.25)}
+.fc.no .fi{background:rgba(255,61,90,0.03);border-left-color:rgba(255,61,90,0.25)}
+
+/* REC */
+.rec{background:var(--surf);border:1px solid var(--b2);border-radius:14px;padding:1.2rem;backdrop-filter:blur(8px);margin-bottom:1rem}
+.rec-txt{font-size:0.9rem;line-height:1.78;color:#aabbd8}
+
+/* DISCLAIMER */
+.disc{padding:0.9rem 1.1rem;background:rgba(255,170,0,0.03);border:1px solid rgba(255,170,0,0.1);border-radius:10px;font-family:var(--mono);font-size:0.65rem;color:var(--mu2);line-height:1.75;margin-top:1.5rem}
+.disc strong{color:var(--warn)}
+
+/* SUMMARY CARD */
+.summary{border-radius:16px;padding:1.4rem 1.5rem;margin-bottom:1rem;position:relative;overflow:hidden;backdrop-filter:blur(16px);border:1px solid transparent;animation:floatUp 0.4s ease}
+.summary.s-buy{background:rgba(0,255,170,0.05);border-color:rgba(0,255,170,0.22)}
+.summary.s-avoid{background:rgba(255,61,90,0.05);border-color:rgba(255,61,90,0.22)}
+.summary.s-neutral{background:rgba(255,170,0,0.05);border-color:rgba(255,170,0,0.2)}
+.summary::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.summary.s-buy::before{background:linear-gradient(90deg,transparent,rgba(0,255,170,0.6),transparent)}
+.summary.s-avoid::before{background:linear-gradient(90deg,transparent,rgba(255,61,90,0.6),transparent)}
+.summary.s-neutral::before{background:linear-gradient(90deg,transparent,rgba(255,170,0,0.5),transparent)}
+.sum-top{display:flex;align-items:center;gap:10px;margin-bottom:0.9rem}
+.sum-icon{font-size:1.5rem;line-height:1;flex-shrink:0}
+.sum-headline{font-size:1.1rem;font-weight:600;color:#fff;line-height:1.35;font-family:var(--body)}
+.sum-body{display:flex;flex-direction:column;gap:0.55rem}
+.sum-line{display:flex;align-items:flex-start;gap:10px;font-size:0.88rem;line-height:1.55;color:#aabbd8}
+.sum-line .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px}
+.summary.s-buy .dot{background:var(--ok)}
+.summary.s-avoid .dot{background:var(--err)}
+.summary.s-neutral .dot{background:var(--warn)}
+.sum-line.hl{color:#ddeeff;font-weight:600}
+.sum-line.warn-line{color:rgba(255,170,0,0.85)}
+.sum-line.warn-line .dot{background:var(--warn)}
+.sum-divider{height:1px;background:rgba(255,255,255,0.06);margin:0.75rem 0}
+.sum-tag{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;padding:3px 9px;border-radius:5px;margin-top:0.5rem}
+.summary.s-buy .sum-tag{background:rgba(0,255,170,0.08);color:rgba(0,255,170,0.7);border:1px solid rgba(0,255,170,0.15)}
+.summary.s-avoid .sum-tag{background:rgba(255,61,90,0.08);color:rgba(255,61,90,0.7);border:1px solid rgba(255,61,90,0.15)}
+.summary.s-neutral .sum-tag{background:rgba(255,170,0,0.08);color:rgba(255,170,0,0.7);border:1px solid rgba(255,170,0,0.15)}
+
+/* RESET BTN */
+.btn-reset{display:none;width:100%;margin-bottom:1rem;padding:0.6rem;background:transparent;border:1px solid var(--b1);border-radius:9px;color:var(--mu2);font-family:var(--mono);font-size:0.72rem;cursor:pointer;transition:all 0.2s;letter-spacing:0.08em}
+.btn-reset:hover{border-color:var(--err);color:var(--err)}
+.btn-reset.on{display:block}
+
+@media(max-width:580px){
+  .m-grid{grid-template-columns:1fr 1fr}
+  .f-grid{grid-template-columns:1fr}
+  .intel-grid{grid-template-columns:1fr 1fr}
+  .logo-txt{font-size:2rem}
+}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div class="nb nb1"></div>
+<div class="nb nb2"></div>
+<div class="nb nb3"></div>
+
+<div class="wrap">
+
+  <header>
+    <div class="logo-ring">
+      <svg viewBox="0 0 52 52" fill="none">
+        <g class="ring-outer">
+          <circle cx="26" cy="26" r="24" stroke="rgba(0,212,255,0.25)" stroke-width="1"/>
+          <circle cx="26" cy="2" r="2" fill="rgba(0,212,255,0.7)"/>
+          <circle cx="50" cy="26" r="2" fill="rgba(0,212,255,0.7)"/>
+          <circle cx="26" cy="50" r="2" fill="rgba(0,212,255,0.7)"/>
+          <circle cx="2" cy="26" r="2" fill="rgba(0,212,255,0.7)"/>
+        </g>
+        <g class="ring-inner">
+          <circle cx="26" cy="26" r="14" stroke="rgba(123,47,255,0.35)" stroke-width="1"/>
+          <circle cx="26" cy="12" r="1.5" fill="rgba(123,47,255,0.8)"/>
+          <circle cx="40" cy="26" r="1.5" fill="rgba(123,47,255,0.8)"/>
+          <circle cx="26" cy="40" r="1.5" fill="rgba(123,47,255,0.8)"/>
+          <circle cx="12" cy="26" r="1.5" fill="rgba(123,47,255,0.8)"/>
+        </g>
+        <circle cx="26" cy="26" r="4" fill="rgba(0,212,255,0.9)"/>
+        <circle cx="26" cy="26" r="2" fill="#fff"/>
+      </svg>
+    </div>
+    <div class="logo-txt">Poly<b>Mind</b></div>
+    <div class="logo-sub">// conselheiro financeiro ia · polymarket intelligence</div>
+  </header>
+
+  <div class="hr"></div>
+
+  <!-- API KEY CARD -->
+  <div class="apikey-card locked" id="apikey-card">
+    <div class="clabel" style="color:var(--ac2)">
+      <span style="width:5px;height:5px;border-radius:50%;background:var(--ac2);box-shadow:0 0 8px var(--ac2);flex-shrink:0;display:inline-block"></span>
+      Sua chave da API Anthropic
+    </div>
+
+    <div class="key-row">
+      <input
+        class="key-input"
+        id="key-in"
+        type="password"
+        placeholder="sk-ant-api03-..."
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <button class="btn-key" id="btn-key" onclick="saveKey()">Salvar chave</button>
+    </div>
+
+    <div class="key-status none" id="key-status">
+      <div class="key-status-dot"></div>
+      <span id="key-status-txt">Nenhuma chave configurada</span>
+    </div>
+
+    <div class="key-hint">
+      Sua chave fica salva só no seu browser (localStorage). Nunca é enviada pra outro servidor — vai direto pra API da Anthropic.
+      Não tem chave? <a href="https://console.anthropic.com/settings/keys" target="_blank">Crie aqui em console.anthropic.com →</a>
+    </div>
+  </div>
+
+  <!-- INPUT CARD -->
+  <div class="card">
+    <div class="clabel">Link do contrato Polymarket</div>
+
+    <div class="url-wrap">
+      <span class="url-icon">⬡</span>
+      <input
+        class="url-input"
+        id="url-in"
+        type="text"
+        placeholder="https://polymarket.com/event/..."
+        autocomplete="off"
+        spellcheck="false"
+      />
+    </div>
+
+    <div class="preview" id="preview">
+      <div class="preview-dot"></div>
+      <div class="preview-slug" id="preview-slug">—</div>
+      <div class="preview-badge">Polymarket</div>
+    </div>
+
+    <div class="stake-row">
+      <span class="stake-label">Aporte USDC</span>
+      <input class="stake-input" id="stake-in" type="number" min="1" step="1" placeholder="Ex: 100">
+      <span class="stake-hint">Opcional — calcula retorno e risco</span>
+    </div>
+
+    <button class="btn-go" id="btn-go" onclick="run()">⬡ ANALISAR CONTRATO</button>
+  </div>
+
+  <!-- LOADING -->
+  <div class="loader" id="loader">
+    <div class="spin-ring"></div>
+    <div class="steps" id="steps"></div>
+  </div>
+
+  <!-- ERROR -->
+  <div class="err" id="err-box"></div>
+
+  <!-- MARKET BANNER -->
+  <div class="mkt-banner" id="mkt-banner">
+    <div class="mkt-title" id="mkt-title">—</div>
+    <div class="mkt-meta" id="mkt-meta"></div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="results" id="results">
+
+    <!-- RESUMO SIMPLES -->
+    <div class="summary s-neutral" id="summary-card">
+      <div class="sum-top">
+        <div class="sum-icon" id="sum-icon">◆</div>
+        <div class="sum-headline" id="sum-headline">—</div>
+      </div>
+      <div class="sum-body" id="sum-body"></div>
+    </div>
+
+    <div class="m-grid">
+      <div class="m-box m-ai">
+        <div class="mlabel">Prob. IA</div>
+        <div class="mval v-ai" id="m-ai">—</div>
+        <div class="msub">estimativa</div>
+      </div>
+      <div class="m-box m-mkt">
+        <div class="mlabel">Preço Poly</div>
+        <div class="mval v-mkt" id="m-mkt">—</div>
+        <div class="msub">mercado</div>
+      </div>
+      <div class="m-box m-edge neu" id="m-edge-box">
+        <div class="mlabel">Edge</div>
+        <div class="mval v-neu" id="m-edge">—</div>
+        <div class="msub">vantagem</div>
+      </div>
+      <div class="m-box m-conf">
+        <div class="mlabel">Confiança</div>
+        <div class="mval v-wh" id="m-conf">—</div>
+        <div class="msub">análise</div>
+      </div>
+    </div>
+
+    <div class="verdict neutral" id="verdict">
+      <span class="vchip" id="vchip">—</span>
+      <span class="vtxt" id="vtxt">—</span>
+    </div>
+
+    <div class="intel">
+      <div class="intel-hdr">Inteligência do Contrato</div>
+      <div class="intel-grid">
+        <div class="intel-item"><div class="ilabel">Retorno se ganhar</div><div class="ival" id="i-ret">—</div></div>
+        <div class="intel-item"><div class="ilabel">Lucro estimado</div><div class="ival" id="i-profit">—</div></div>
+        <div class="intel-item"><div class="ilabel">Risco máximo</div><div class="ival" id="i-risk">—</div></div>
+      </div>
+    </div>
+
+    <div class="analysis">
+      <div class="a-hdr">// análise fundamentada · polymarket contract intelligence</div>
+      <div class="a-body">
+        <div class="a-txt" id="a-txt">—</div>
+        <div class="f-grid">
+          <div class="fc yes"><h4>Favoráveis</h4><div id="f-yes"></div></div>
+          <div class="fc no"><h4>Contrários</h4><div id="f-no"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rec card">
+      <div class="clabel">Recomendação de aporte</div>
+      <div class="rec-txt" id="rec-txt">—</div>
+    </div>
+
+  </div>
+
+  <button class="btn-reset" id="btn-reset" onclick="resetAll()">← Nova análise</button>
+
+  <div class="disc">
+    <strong>⚠ Aviso:</strong> Ferramenta de análise com IA — <strong>não é garantia de resultado</strong>. Mercados de previsão envolvem risco real de perda total. Opere apenas com valores que você está disposto a perder. Decisões financeiras são de sua exclusiva responsabilidade.
+  </div>
+
+</div>
+
+<script>
+/* ── API KEY MANAGEMENT ── */
+const KEY_LS = 'polymind_api_key';
+
+function loadKey(){
+  try{
+    const k = localStorage.getItem(KEY_LS);
+    if(k){ applyKey(k); document.getElementById('key-in').value = k; }
+  }catch(e){}
+}
+
+function saveKey(){
+  const k = document.getElementById('key-in').value.trim();
+  if(!k.startsWith('sk-ant-')){
+    document.getElementById('key-in').classList.add('invalid');
+    setKeyStatus('none', '⚠ Chave inválida — deve começar com sk-ant-');
+    return;
+  }
+  try{ localStorage.setItem(KEY_LS, k); }catch(e){}
+  applyKey(k);
+}
+
+function applyKey(k){
+  document.getElementById('key-in').classList.remove('invalid');
+  document.getElementById('key-in').classList.add('ok');
+  document.getElementById('btn-key').textContent = '✓ Salva';
+  document.getElementById('btn-key').classList.add('saved');
+  document.getElementById('apikey-card').classList.replace('locked','unlocked');
+  const masked = k.slice(0,10)+'•••••••••••••'+k.slice(-4);
+  setKeyStatus('set', 'Chave ativa: '+masked);
+}
+
+function setKeyStatus(state, txt){
+  const el = document.getElementById('key-status');
+  el.className = 'key-status '+state;
+  document.getElementById('key-status-txt').textContent = txt;
+}
+
+function getKey(){
+  try{ return localStorage.getItem(KEY_LS)||''; }catch(e){ return ''; }
+}
+
+document.addEventListener('DOMContentLoaded', loadKey);
+
+/* allow toggling visibility */
+document.getElementById('key-in')?.addEventListener('dblclick', function(){
+  this.type = this.type === 'password' ? 'text' : 'password';
+});
+
+document.getElementById('key-in')?.addEventListener('input', function(){
+  this.classList.remove('invalid');
+  if(this.value.startsWith('sk-ant-')){
+    document.getElementById('btn-key').classList.remove('saved');
+    document.getElementById('btn-key').textContent = 'Salvar chave';
+    setKeyStatus('none','Pressione Salvar chave para ativar');
+  }
+});
+
+document.getElementById('key-in')?.addEventListener('keydown', e=>{
+  if(e.key==='Enter') saveKey();
+});
+
+/* ── COSMOS ── */
+const cv = document.getElementById('cv');
+const cx = cv.getContext('2d');
+let W, H, stars = [], meteors = [];
+
+function rsz(){
+  W = cv.width = window.innerWidth;
+  H = cv.height = window.innerHeight;
+}
+
+function initStars(){
+  stars = Array.from({length:380}, ()=>({
+    x: Math.random()*W, y: Math.random()*H,
+    r: Math.random()*1.4+0.15,
+    tw: Math.random()*Math.PI*2,
+    sp: Math.random()*0.004+0.0008,
+    col: Math.random() > 0.92 ? [180,200,255] : [200,215,255]
+  }));
+}
+
+function frame(){
+  cx.clearRect(0,0,W,H);
+  stars.forEach(s=>{
+    s.tw += s.sp;
+    const a = Math.max(0.04, 0.2+Math.sin(s.tw)*0.5);
+    cx.beginPath();
+    cx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+    cx.fillStyle = `rgba(${s.col[0]},${s.col[1]},${s.col[2]},${a})`;
+    cx.fill();
+  });
+  meteors = meteors.filter(m=>{
+    m.x += m.vx; m.y += m.vy; m.life--;
+    const a = (m.life/m.max)*0.75;
+    cx.beginPath();
+    cx.moveTo(m.x, m.y);
+    cx.lineTo(m.x-m.vx*16, m.y-m.vy*16);
+    cx.strokeStyle = `rgba(180,220,255,${a})`;
+    cx.lineWidth = 1.2;
+    cx.stroke();
+    return m.life > 0;
+  });
+  if(Math.random()<0.0045 && meteors.length < 3){
+    const ang = (15+Math.random()*20) * Math.PI/180;
+    const spd = 3.5+Math.random()*4;
+    meteors.push({
+      x: Math.random()*W*0.7, y: Math.random()*H*0.35,
+      vx: Math.cos(ang)*spd, vy: Math.sin(ang)*spd,
+      life: 40, max: 40
+    });
+  }
+  requestAnimationFrame(frame);
+}
+
+rsz(); initStars();
+window.addEventListener('resize', ()=>{ rsz(); initStars(); });
+requestAnimationFrame(frame);
+
+/* ── URL DETECTION ── */
+const urlIn = document.getElementById('url-in');
+const preview = document.getElementById('preview');
+const previewSlug = document.getElementById('preview-slug');
+
+function parsePolyURL(raw){
+  const s = raw.trim();
+  if(!s) return null;
+  try{
+    const u = new URL(s);
+    if(!u.hostname.includes('polymarket.com')) return null;
+    const parts = u.pathname.split('/').filter(Boolean);
+    if(parts.length < 2) return null;
+    return {
+      slug: parts[parts.length-1],
+      section: parts[0],
+      full: s
+    };
+  }catch(e){ return null; }
+}
+
+urlIn.addEventListener('input', ()=>{
+  const raw = urlIn.value;
+  const parsed = parsePolyURL(raw);
+  if(parsed){
+    urlIn.classList.remove('invalid');
+    urlIn.classList.add('valid');
+    previewSlug.textContent = decodeURIComponent(parsed.slug).replace(/-/g,' ');
+    preview.classList.add('show');
+  } else if(raw.length > 8){
+    urlIn.classList.add('invalid');
+    urlIn.classList.remove('valid');
+    preview.classList.remove('show');
+  } else {
+    urlIn.classList.remove('invalid','valid');
+    preview.classList.remove('show');
+  }
+});
+
+urlIn.addEventListener('keydown', e=>{
+  if(e.key==='Enter') run();
+});
+
+/* ── STEP MANAGER ── */
+const STEPS_LIST = [
+  'Lendo link do Polymarket...',
+  'Buscando dados do contrato em tempo real...',
+  'Analisando histórico e liquidez...',
+  'Calculando probabilidade e edge...',
+  'Gerando recomendação financeira...',
+  'Finalizando análise...'
+];
+
+let stepTimer, curStep = 0;
+
+function startSteps(){
+  const el = document.getElementById('steps');
+  el.innerHTML = '';
+  STEPS_LIST.forEach((s,i)=>{
+    const d = document.createElement('div');
+    d.className = 'step';
+    d.id = 'step-'+i;
+    d.textContent = s;
+    el.appendChild(d);
+  });
+  curStep = 0;
+  document.getElementById('step-0').className = 'step cur';
+  clearInterval(stepTimer);
+  stepTimer = setInterval(()=>{
+    if(curStep < STEPS_LIST.length-1){
+      document.getElementById('step-'+curStep).className = 'step done';
+      curStep++;
+      document.getElementById('step-'+curStep).className = 'step cur';
+    }
+  }, 1400);
+}
+
+function doneSteps(){
+  clearInterval(stepTimer);
+  for(let i=0;i<=curStep;i++){
+    const el = document.getElementById('step-'+i);
+    if(el) el.className = 'step done';
+  }
+}
+
+/* ── MAIN ANALYSIS ── */
+async function run(){
+  const raw = urlIn.value.trim();
+  const stake = document.getElementById('stake-in').value;
+  const apiKey = getKey();
+
+  if(!apiKey || !apiKey.startsWith('sk-ant-')){
+    showErr('Configure sua chave da API Anthropic antes de analisar. Cole ela no campo acima e clique em Salvar chave.');
+    document.getElementById('key-in').focus();
+    return;
+  }
+
+  if(!raw){ showErr('Cole o link do contrato do Polymarket.'); return; }
+
+  const parsed = parsePolyURL(raw);
+  if(!parsed){ showErr('URL inválida. Use um link do tipo: https://polymarket.com/event/nome-do-contrato'); return; }
+
+  setBusy(true);
+  hideErr();
+  hideResults();
+  startSteps();
+
+  const slug = decodeURIComponent(parsed.slug).replace(/-/g,' ');
+
+  const SYS = `Você é um conselheiro financeiro especializado em mercados de previsão descentralizados, com foco total no Polymarket.
+
+Você domina completamente:
+- Estrutura de contratos binários YES/NO do Polymarket (USDC na rede Polygon)
+- Mecanismo de precificação AMM/LMSR e como o preço YES reflete probabilidade implícita
+- Liquidez, volume de negociação, spreads bid/ask e impacto de mercado
+- Critério de Kelly para sizing de posição em mercados binários
+- Resolução de contratos: oráculos, datas, critérios de resolução
+- Estratégias de edge: value betting quando mercado está mal precificado
+- Gestão de risco: diversificação, stop mental, alocação por confiança
+
+Ao receber uma URL do Polymarket:
+1. Use web_search para buscar informações atuais sobre o contrato: preço YES atual, volume, data de resolução, título exato
+2. Pesquise o evento em si para estimar probabilidade real com dados
+3. Compare sua estimativa com o preço do mercado para calcular edge
+4. Forneça recomendação específica de aporte e gestão de risco
+
+RESPONDA APENAS em JSON válido e completo, sem markdown, sem texto fora do JSON:
+{
+  "market_title": "<título exato do contrato encontrado>",
+  "market_price": <preço YES atual em % como número, ex: 65.3>,
+  "resolution_date": "<data de resolução encontrada ou 'Não encontrada'>",
+  "volume": "<volume total encontrado ou 'N/D'>",
+  "category": "<categoria do mercado>",
+  "probability": <sua estimativa da prob real, inteiro 0-100>,
+  "confidence": <sua confiança na análise, inteiro 0-100>,
+  "verdict": "<BUY|AVOID|NEUTRAL>",
+  "verdict_reason": "<frase curta em português, máx 18 palavras>",
+  "analysis": "<3-5 frases em português: análise do evento + contexto do contrato Polymarket>",
+  "factors_yes": ["<fator 1>","<fator 2>","<fator 3>"],
+  "factors_no": ["<fator 1>","<fator 2>","<fator 3>"],
+  "recommendation": "<2-4 frases em português: recomendação de aporte, sizing, gestão de risco, estratégia específica para este contrato>",
+  "market_insight": "<observação sobre liquidez, risco de resolução ou timing deste contrato específico>",
+  "summary_headline": "<frase direta dizendo o que é mais provável, ex: 'Sim, é mais provável que o BTC supere $100k antes de junho'>",
+  "summary_likely": "<1 frase simples: principal razão para o evento ACONTECER>",
+  "summary_unlikely": "<1 frase simples: principal razão para o evento NÃO acontecer>",
+  "summary_action": "<1 frase direta: deve ou não aportar e por quê, em linguagem bem simples>",
+  "summary_warning": "<1 frase: principal risco ou alerta deste contrato específico>"
+}
+
+Regras de verdict:
+- BUY: sua prob > preço mercado em mais de 8pp — edge real identificado
+- AVOID: sua prob < preço mercado em mais de 8pp — mercado superestimando
+- NEUTRAL: diferença entre -8 e +8pp, ou incerteza alta`;
+
+  const USR = `Analise este contrato do Polymarket:
+
+URL: ${parsed.full}
+SLUG DO CONTRATO: ${slug}
+${stake ? `APORTE PLANEJADO: $${stake} USDC` : 'Aporte: não informado'}
+
+1. Busque na web dados atuais deste contrato: preço YES, volume, data de resolução, título
+2. Pesquise o contexto do evento para estimar probabilidade real
+3. Calcule edge e gere recomendação financeira completa
+4. Retorne SOMENTE o JSON especificado no system prompt`;
+
+  try{
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1800,
+        system: SYS,
+        tools:[{type:'web_search_20250305',name:'web_search'}],
+        messages:[{role:'user',content:USR}]
+      })
+    });
+
+    const data = await res.json();
+    if(!res.ok){
+      if(res.status === 401) throw new Error('Chave de API inválida ou expirada. Verifique sua chave em console.anthropic.com');
+      if(res.status === 429) throw new Error('Limite de requisições atingido. Aguarde um momento e tente novamente.');
+      throw new Error(data.error?.message || 'Erro na API Anthropic (status '+res.status+')');
+    }
+
+    const txt = data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+    if(!txt) throw new Error('A IA não retornou texto. Tente novamente.');
+
+    const clean = txt.replace(/```json[\s\S]*?```|```[\s\S]*?```/g, t=>t.slice(t.indexOf('\n')+1,t.lastIndexOf('```'))).replace(/```/g,'').trim();
+
+    let r;
+    try{ r = JSON.parse(clean); }
+    catch(pe){
+      const m = clean.match(/\{[\s\S]*\}/);
+      if(m) r = JSON.parse(m[0]);
+      else throw new Error('Resposta da IA em formato inválido. Tente novamente.');
+    }
+
+    doneSteps();
+    renderResult(r, stake);
+
+  }catch(err){
+    doneSteps();
+    showErr('Erro: '+err.message);
+  }finally{
+    setBusy(false);
+  }
+}
+
+/* ── RENDER ── */
+function renderResult(r, stake){
+  /* market banner */
+  document.getElementById('mkt-title').textContent = r.market_title || '—';
+  const meta = document.getElementById('mkt-meta');
+  meta.innerHTML = '';
+  const tags = [
+    r.category && ['Categoria', r.category],
+    r.resolution_date && r.resolution_date !== 'Não encontrada' && ['Resolução', r.resolution_date],
+    r.volume && r.volume !== 'N/D' && ['Volume', r.volume],
+    r.market_price != null && ['Preço YES', r.market_price.toFixed(1)+'%']
+  ].filter(Boolean);
+  tags.forEach(([k,v])=>{
+    const span = document.createElement('span');
+    span.className = 'mkt-tag';
+    span.innerHTML = `${k}: <b>${v}</b>`;
+    meta.appendChild(span);
+  });
+  document.getElementById('mkt-banner').classList.add('on');
+
+  /* metrics */
+  const aiP = r.probability;
+  const mktP = r.market_price != null ? parseFloat(r.market_price) : null;
+  const edge = mktP !== null ? aiP - mktP : null;
+
+  document.getElementById('m-ai').textContent = aiP+'%';
+  document.getElementById('m-mkt').textContent = mktP !== null ? mktP.toFixed(1)+'%' : 'N/D';
+  document.getElementById('m-conf').textContent = (r.confidence||60)+'%';
+
+  const eBox = document.getElementById('m-edge-box');
+  const eVal = document.getElementById('m-edge');
+  if(edge !== null){
+    const sign = edge>=0?'+':'';
+    eVal.textContent = sign+edge.toFixed(1)+'%';
+    if(edge>8){ eBox.className='m-box m-edge pos'; eVal.className='mval v-pos'; }
+    else if(edge<-8){ eBox.className='m-box m-edge neg'; eVal.className='mval v-neg'; }
+    else{ eBox.className='m-box m-edge neu'; eVal.className='mval v-neu'; }
+  } else {
+    eVal.textContent='N/D'; eVal.className='mval v-wh';
+  }
+
+  /* verdict */
+  const v = r.verdict;
+  const vd = document.getElementById('verdict');
+  const vc = document.getElementById('vchip');
+  vd.className = 'verdict '+(v==='BUY'?'buy':v==='AVOID'?'avoid':'neutral');
+  vc.textContent = v==='BUY'?'▲ APOSTAR SIM':v==='AVOID'?'▼ EVITAR':'◆ NEUTRO';
+  document.getElementById('vtxt').textContent = r.verdict_reason||'—';
+
+  /* intel */
+  if(stake && mktP !== null){
+    const s = parseFloat(stake);
+    const price = mktP/100;
+    const shares = s/price;
+    const profit = shares-s;
+    const ret = ((profit/s)*100).toFixed(1);
+    document.getElementById('i-ret').textContent = ret+'%';
+    document.getElementById('i-profit').textContent = profit>=0?'+$'+profit.toFixed(2):'-$'+Math.abs(profit).toFixed(2);
+    document.getElementById('i-risk').textContent = '-$'+s.toFixed(2);
+  } else {
+    ['i-ret','i-profit','i-risk'].forEach(id=>document.getElementById(id).textContent='—');
+  }
+
+  /* analysis */
+  document.getElementById('a-txt').textContent = r.analysis||'—';
+  const fy = document.getElementById('f-yes'); fy.innerHTML='';
+  (r.factors_yes||[]).forEach(f=>{ const d=document.createElement('div'); d.className='fi'; d.textContent=f; fy.appendChild(d); });
+  const fn = document.getElementById('f-no'); fn.innerHTML='';
+  (r.factors_no||[]).forEach(f=>{ const d=document.createElement('div'); d.className='fi'; d.textContent=f; fn.appendChild(d); });
+
+  /* recommendation */
+  const rec = [r.recommendation, r.market_insight].filter(Boolean).join(' ');
+  document.getElementById('rec-txt').textContent = rec||'—';
+
+  /* ── RESUMO SIMPLES ── */
+  const sc = document.getElementById('summary-card');
+  const vIcon = v==='BUY' ? '✅' : v==='AVOID' ? '❌' : '⚠️';
+  const sClass = v==='BUY' ? 's-buy' : v==='AVOID' ? 's-avoid' : 's-neutral';
+  sc.className = 'summary '+sClass;
+  document.getElementById('sum-icon').textContent = vIcon;
+  document.getElementById('sum-headline').textContent = r.summary_headline || r.verdict_reason || '—';
+
+  const sb = document.getElementById('sum-body');
+  sb.innerHTML = '';
+
+  const sumLines = [
+    r.summary_likely   && { text: r.summary_likely,   cls: 'sum-line hl', divider: false },
+    r.summary_unlikely && { text: r.summary_unlikely, cls: 'sum-line',    divider: false },
+    r.summary_action   && { text: r.summary_action,   cls: 'sum-line hl', divider: true  },
+    r.summary_warning  && { text: r.summary_warning,  cls: 'sum-line warn-line', divider: false }
+  ].filter(Boolean);
+
+  sumLines.forEach(item => {
+    if(item.divider){
+      const hr = document.createElement('div');
+      hr.className = 'sum-divider';
+      sb.appendChild(hr);
+    }
+    const row = document.createElement('div');
+    row.className = item.cls;
+    const dot = document.createElement('span');
+    dot.className = 'dot';
+    const txt = document.createElement('span');
+    txt.textContent = item.text;
+    row.appendChild(dot);
+    row.appendChild(txt);
+    sb.appendChild(row);
+  });
+
+  const tag = document.createElement('div');
+  tag.className = 'sum-tag';
+  tag.textContent = v==='BUY' ? '↗ Oportunidade identificada' : v==='AVOID' ? '↘ Mercado superestimado' : '→ Aguardar melhor momento';
+  sb.appendChild(tag);
+
+  /* show */
+  document.getElementById('results').classList.add('on');
+  document.getElementById('btn-reset').classList.add('on');
+  setTimeout(()=>document.getElementById('mkt-banner').scrollIntoView({behavior:'smooth',block:'start'}), 100);
+}
+
+/* ── UTILS ── */
+function setBusy(on){
+  document.getElementById('btn-go').disabled = on;
+  document.getElementById('btn-go').textContent = on ? 'ANALISANDO...' : '⬡ ANALISAR CONTRATO';
+  const l = document.getElementById('loader');
+  on ? l.classList.add('on') : l.classList.remove('on');
+}
+
+function showErr(msg){
+  const e = document.getElementById('err-box');
+  e.textContent = msg; e.classList.add('on');
+}
+
+function hideErr(){ document.getElementById('err-box').classList.remove('on'); }
+
+function hideResults(){
+  document.getElementById('results').classList.remove('on');
+  document.getElementById('mkt-banner').classList.remove('on');
+  document.getElementById('btn-reset').classList.remove('on');
+  document.getElementById('summary-card').className = 'summary s-neutral';
+  document.getElementById('sum-body').innerHTML = '';
+  document.getElementById('sum-headline').textContent = '—';
+}
+
+function resetAll(){
+  urlIn.value = '';
+  document.getElementById('stake-in').value = '';
+  urlIn.classList.remove('valid','invalid');
+  preview.classList.remove('show');
+  hideResults();
+  hideErr();
+  urlIn.focus();
+}
+</script>
+</body>
+</html>
